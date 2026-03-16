@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 import requests
 
-from conftest import BASE_URL, make_paginated, make_response
+from helpers import BASE_URL, make_paginated, make_response
 
 
 # ---------------------------------------------------------------------------#
