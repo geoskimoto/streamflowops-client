@@ -1,0 +1,3969 @@
+openapi: 3.0.3
+info:
+  title: StreamFlow DataOps API
+  version: 1.0.0
+  description: REST API for accessing streamflow discharge data, managing stations,
+    and configuring data pulls
+paths:
+  /api/v1/analytics/computations/:
+    get:
+      operationId: analytics_computations_list
+      description: |-
+        Read-only view of the analytics computation registry.
+        Supports listing all computations, retrieving detail with recent logs,
+        and triggering a manual run.
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - analytics
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedScheduledComputationListList'
+          description: ''
+  /api/v1/analytics/computations/{id}/:
+    get:
+      operationId: analytics_computations_retrieve
+      description: |-
+        Read-only view of the analytics computation registry.
+        Supports listing all computations, retrieving detail with recent logs,
+        and triggering a manual run.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheduled computation.
+        required: true
+      tags:
+      - analytics
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduledComputation'
+          description: ''
+  /api/v1/analytics/computations/{id}/trigger/:
+    post:
+      operationId: analytics_computations_trigger_create
+      description: Manually trigger a computation run outside of its schedule.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheduled computation.
+        required: true
+      tags:
+      - analytics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduledComputationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScheduledComputationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ScheduledComputationRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                  task_id:
+                    type: string
+          description: ''
+  /api/v1/analytics/logs/:
+    get:
+      operationId: analytics_logs_list
+      description: Read-only log history for analytics computation runs.
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - analytics
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedComputationLogList'
+          description: ''
+  /api/v1/analytics/logs/{id}/:
+    get:
+      operationId: analytics_logs_retrieve
+      description: Read-only log history for analytics computation runs.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this computation log.
+        required: true
+      tags:
+      - analytics
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComputationLog'
+          description: ''
+  /api/v1/configurations/:
+    get:
+      operationId: configurations_list
+      description: |-
+        ViewSet for managing pull configurations.
+
+        list: Get all configurations with filtering
+        retrieve: Get a single configuration with details
+        create: Create a new configuration
+        update: Update a configuration
+        partial_update: Partially update a configuration
+        destroy: Delete a configuration
+      parameters:
+      - in: query
+        name: data_strategy
+        schema:
+          type: string
+          enum:
+          - append
+          - overwrite
+        description: |-
+          * `append` - Append
+          * `overwrite` - Overwrite
+      - in: query
+        name: data_type
+        schema:
+          type: string
+          enum:
+          - daily_mean
+          - ec_realtime_daily
+          - forecast
+          - realtime_15min
+        description: |-
+          * `realtime_15min` - Real-time 15 min
+          * `daily_mean` - Daily Mean
+          * `forecast` - Forecast
+          * `ec_realtime_daily` - EC Wateroffice Daily Mean
+      - in: query
+        name: is_enabled
+        schema:
+          type: boolean
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: schedule_type
+        schema:
+          type: string
+          enum:
+          - custom
+          - daily
+          - hourly
+          - weekly
+        description: |-
+          * `hourly` - Hourly
+          * `daily` - Daily
+          * `weekly` - Weekly
+          * `custom` - Custom Cron
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - configurations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPullConfigurationList'
+          description: ''
+    post:
+      operationId: configurations_create
+      description: |-
+        ViewSet for managing pull configurations.
+
+        list: Get all configurations with filtering
+        retrieve: Get a single configuration with details
+        create: Create a new configuration
+        update: Update a configuration
+        partial_update: Partially update a configuration
+        destroy: Delete a configuration
+      tags:
+      - configurations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationCreateRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullConfigurationCreate'
+          description: ''
+  /api/v1/configurations/{id}/:
+    get:
+      operationId: configurations_retrieve
+      description: |-
+        ViewSet for managing pull configurations.
+
+        list: Get all configurations with filtering
+        retrieve: Get a single configuration with details
+        create: Create a new configuration
+        update: Update a configuration
+        partial_update: Partially update a configuration
+        destroy: Delete a configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pull configuration.
+        required: true
+      tags:
+      - configurations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullConfigurationDetail'
+          description: ''
+    put:
+      operationId: configurations_update
+      description: |-
+        ViewSet for managing pull configurations.
+
+        list: Get all configurations with filtering
+        retrieve: Get a single configuration with details
+        create: Create a new configuration
+        update: Update a configuration
+        partial_update: Partially update a configuration
+        destroy: Delete a configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pull configuration.
+        required: true
+      tags:
+      - configurations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullConfiguration'
+          description: ''
+    patch:
+      operationId: configurations_partial_update
+      description: |-
+        ViewSet for managing pull configurations.
+
+        list: Get all configurations with filtering
+        retrieve: Get a single configuration with details
+        create: Create a new configuration
+        update: Update a configuration
+        partial_update: Partially update a configuration
+        destroy: Delete a configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pull configuration.
+        required: true
+      tags:
+      - configurations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPullConfigurationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPullConfigurationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPullConfigurationRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullConfiguration'
+          description: ''
+    delete:
+      operationId: configurations_destroy
+      description: |-
+        ViewSet for managing pull configurations.
+
+        list: Get all configurations with filtering
+        retrieve: Get a single configuration with details
+        create: Create a new configuration
+        update: Update a configuration
+        partial_update: Partially update a configuration
+        destroy: Delete a configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pull configuration.
+        required: true
+      tags:
+      - configurations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/configurations/{id}/disable/:
+    post:
+      operationId: configurations_disable_create
+      description: Disable a configuration.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pull configuration.
+        required: true
+      tags:
+      - configurations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullConfiguration'
+          description: ''
+  /api/v1/configurations/{id}/enable/:
+    post:
+      operationId: configurations_enable_create
+      description: Enable a configuration.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pull configuration.
+        required: true
+      tags:
+      - configurations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullConfiguration'
+          description: ''
+  /api/v1/configurations/{id}/execution_history/:
+    get:
+      operationId: configurations_execution_history_retrieve
+      description: |-
+        Get execution history for this configuration.
+
+        Query params:
+        - limit: Number of recent executions to return (default: 20)
+        - status: Filter by status (success, failed, running)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pull configuration.
+        required: true
+      tags:
+      - configurations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullConfiguration'
+          description: ''
+  /api/v1/configurations/{id}/statistics/:
+    get:
+      operationId: configurations_statistics_retrieve
+      description: |-
+        Get detailed statistics for this configuration.
+
+        Includes success rates, performance metrics, and data quality info.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pull configuration.
+        required: true
+      tags:
+      - configurations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullConfiguration'
+          description: ''
+  /api/v1/configurations/{id}/trigger/:
+    post:
+      operationId: configurations_trigger_create
+      description: |-
+        Trigger a manual execution of this configuration.
+
+        Starts a Celery task to pull data for all stations in this configuration.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pull configuration.
+        required: true
+      tags:
+      - configurations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PullConfigurationRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullConfiguration'
+          description: ''
+  /api/v1/forecasts/:
+    get:
+      operationId: forecasts_list
+      description: List all forecast runs with optional filters.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date-time
+        description: Filter forecasts before this date
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: run_date
+        schema:
+          type: string
+          format: date-time
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+        description: Filter by source (e.g., NOAA_RFC)
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date-time
+        description: Filter forecasts after this date
+      - in: query
+        name: station
+        schema:
+          type: integer
+      - in: query
+        name: station_number
+        schema:
+          type: string
+        description: Filter by station number
+      tags:
+      - forecasts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedForecastRunListList'
+          description: ''
+  /api/v1/forecasts/{id}/:
+    get:
+      operationId: forecasts_retrieve
+      description: Retrieve a specific forecast run with full data.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this forecast run.
+        required: true
+      tags:
+      - forecasts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastRun'
+          description: ''
+  /api/v1/forecasts/by-station/{station_number}/:
+    get:
+      operationId: forecasts_by_station_list
+      description: |-
+        Get all forecast runs for a specific station.
+
+        Returns forecasts ordered by run date (most recent first).
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: run_date
+        schema:
+          type: string
+          format: date-time
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+          enum:
+          - NOAA_RFC
+        description: '* `NOAA_RFC` - NOAA River Forecast Center'
+      - in: query
+        name: station
+        schema:
+          type: integer
+      - in: path
+        name: station_number
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: station_number
+        schema:
+          type: string
+        description: Station number
+        required: true
+      tags:
+      - forecasts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedForecastRunList'
+          description: ''
+  /api/v1/forecasts/latest/:
+    get:
+      operationId: forecasts_latest_retrieve
+      description: Get the most recent forecast run across all stations.
+      tags:
+      - forecasts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastRun'
+          description: ''
+  /api/v1/forecasts/statistics/:
+    get:
+      operationId: forecasts_statistics_retrieve
+      description: |-
+        Get aggregate statistics for forecast runs.
+
+        Returns counts, date ranges, and average RMSE.
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date-time
+        description: End date for statistics
+      - in: query
+        name: source
+        schema:
+          type: string
+        description: Filter by source
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date-time
+        description: Start date for statistics
+      tags:
+      - forecasts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastStatistics'
+          description: ''
+  /api/v1/logs/:
+    get:
+      operationId: logs_list
+      description: |-
+        ViewSet for querying data pull execution logs.
+
+        list: Get all data pull logs with filtering
+        retrieve: Get a single log entry
+      parameters:
+      - in: query
+        name: configuration
+        schema:
+          type: integer
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - failed
+          - running
+          - success
+        description: |-
+          * `running` - Running
+          * `success` - Success
+          * `failed` - Failed
+      tags:
+      - logs
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDataPullLogListList'
+          description: ''
+  /api/v1/logs/{id}/:
+    get:
+      operationId: logs_retrieve
+      description: |-
+        ViewSet for querying data pull execution logs.
+
+        list: Get all data pull logs with filtering
+        retrieve: Get a single log entry
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this data pull log.
+        required: true
+      tags:
+      - logs
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataPullLog'
+          description: ''
+  /api/v1/observations/discharge/:
+    get:
+      operationId: observations_discharge_list
+      description: |-
+        ViewSet for querying discharge observations.
+
+        list: Get discharge observations with filtering
+        retrieve: Get a single observation
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: quality_code
+        schema:
+          type: string
+          enum:
+          - A
+          - P
+        description: |-
+          * `P` - Provisional
+          * `A` - Approved
+      - in: query
+        name: station
+        schema:
+          type: integer
+      - in: query
+        name: type
+        schema:
+          type: string
+          enum:
+          - daily_mean
+          - realtime_15min
+        description: |-
+          * `realtime_15min` - Real-time 15 min
+          * `daily_mean` - Daily Mean
+      - in: query
+        name: unit
+        schema:
+          type: string
+          enum:
+          - cfs
+          - cms
+        description: |-
+          * `cfs` - Cubic Feet per Second
+          * `cms` - Cubic Meters per Second
+      tags:
+      - observations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDischargeObservationList'
+          description: ''
+  /api/v1/observations/discharge/{id}/:
+    get:
+      operationId: observations_discharge_retrieve
+      description: |-
+        ViewSet for querying discharge observations.
+
+        list: Get discharge observations with filtering
+        retrieve: Get a single observation
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this discharge observation.
+        required: true
+      tags:
+      - observations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DischargeObservation'
+          description: ''
+  /api/v1/observations/discharge/percentile-bands/:
+    get:
+      operationId: observations_discharge_percentile_bands_retrieve
+      description: |-
+        Return precomputed exceedance percentile bands for all stations on a
+        given date.
+
+        Data is populated by the daily Celery task and the historical backfill
+        command. Use ``?date=YYYY-MM-DD`` to drive a rangeslider. Omit the
+        parameter to get the latest available date.
+
+        Responses for past dates include long-lived Cache-Control and ETag
+        headers (data never changes once computed). Today's date is uncached.
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+        description: Return bands for this date (YYYY-MM-DD). Defaults to the latest
+          date available in the database.
+      - in: query
+        name: station
+        schema:
+          type: string
+        description: Filter to a single station number.
+      tags:
+      - observations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PercentileBandsResponse'
+          description: ''
+  /api/v1/observations/discharge/percentile-date-range/:
+    get:
+      operationId: observations_discharge_percentile_date_range_retrieve
+      description: |-
+        Return the min and max dates available in daily_flow_percentiles.
+
+        Use this to set the bounds of the rangeslider in the dashboard.
+        Response is cached for 1 hour.
+      tags:
+      - observations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PercentileDateRange'
+          description: ''
+  /api/v1/observations/discharge/statistics/:
+    get:
+      operationId: observations_discharge_statistics_retrieve
+      description: |-
+        Get statistical summary of observations.
+
+        Query params:
+        - station_number: Optional filter
+        - start_date: ISO format datetime
+        - end_date: ISO format datetime
+        - type: realtime_15min or daily_mean
+      tags:
+      - observations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DischargeObservation'
+          description: ''
+  /api/v1/raster-configurations/:
+    get:
+      operationId: raster_configurations_list
+      description: API viewset for raster pull configurations.
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - raster-configurations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRasterPullConfigurationList'
+          description: ''
+  /api/v1/raster-configurations/{id}/:
+    get:
+      operationId: raster_configurations_retrieve
+      description: API viewset for raster pull configurations.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster pull configuration.
+        required: true
+      tags:
+      - raster-configurations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterPullConfiguration'
+          description: ''
+  /api/v1/raster-configurations/{id}/logs/:
+    get:
+      operationId: raster_configurations_logs_retrieve
+      description: Get pull logs for this configuration.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster pull configuration.
+        required: true
+      tags:
+      - raster-configurations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterPullConfiguration'
+          description: ''
+  /api/v1/raster-datasets/:
+    get:
+      operationId: raster_datasets_list
+      description: API viewset for raster datasets.
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - raster-datasets
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRasterDatasetList'
+          description: ''
+  /api/v1/raster-datasets/{id}/:
+    get:
+      operationId: raster_datasets_retrieve
+      description: API viewset for raster datasets.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster dataset.
+        required: true
+      tags:
+      - raster-datasets
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterDataset'
+          description: ''
+  /api/v1/raster-datasets/{id}/coverage/:
+    get:
+      operationId: raster_datasets_coverage_retrieve
+      description: Get temporal coverage for this dataset.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster dataset.
+        required: true
+      tags:
+      - raster-datasets
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterDataset'
+          description: ''
+  /api/v1/raster-datasets/{id}/variables/:
+    get:
+      operationId: raster_datasets_variables_retrieve
+      description: Get variables for this dataset.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster dataset.
+        required: true
+      tags:
+      - raster-datasets
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterDataset'
+          description: ''
+  /api/v1/raster-layers/:
+    get:
+      operationId: raster_layers_list
+      description: API viewset for raster layers.
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - raster-layers
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRasterLayerListList'
+          description: ''
+  /api/v1/raster-layers/{id}/:
+    get:
+      operationId: raster_layers_retrieve
+      description: API viewset for raster layers.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster layer.
+        required: true
+      tags:
+      - raster-layers
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterLayer'
+          description: ''
+  /api/v1/raster-layers/{id}/download/:
+    get:
+      operationId: raster_layers_download_retrieve
+      description: Download raster file.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster layer.
+        required: true
+      tags:
+      - raster-layers
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterLayer'
+          description: ''
+  /api/v1/raster-layers/{id}/thumbnail/:
+    get:
+      operationId: raster_layers_thumbnail_retrieve
+      description: Get raster thumbnail.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster layer.
+        required: true
+      tags:
+      - raster-layers
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterLayer'
+          description: ''
+  /api/v1/raster-layers/coverage/:
+    get:
+      operationId: raster_layers_coverage_retrieve
+      description: Get temporal coverage summary.
+      tags:
+      - raster-layers
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterLayer'
+          description: ''
+  /api/v1/raster-layers/extract_points/:
+    post:
+      operationId: raster_layers_extract_points_create
+      description: Extract raster values at specific coordinates.
+      tags:
+      - raster-layers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RasterLayerRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RasterLayerRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RasterLayerRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterLayer'
+          description: ''
+  /api/v1/raster-layers/statistics/:
+    get:
+      operationId: raster_layers_statistics_retrieve
+      description: Get aggregated statistics.
+      tags:
+      - raster-layers
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterLayer'
+          description: ''
+  /api/v1/raster-logs/:
+    get:
+      operationId: raster_logs_list
+      description: API viewset for raster pull logs.
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - raster-logs
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRasterPullLogList'
+          description: ''
+  /api/v1/raster-logs/{id}/:
+    get:
+      operationId: raster_logs_retrieve
+      description: API viewset for raster pull logs.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster pull log.
+        required: true
+      tags:
+      - raster-logs
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterPullLog'
+          description: ''
+  /api/v1/raster-variables/:
+    get:
+      operationId: raster_variables_list
+      description: API viewset for raster variables.
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - raster-variables
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRasterVariableList'
+          description: ''
+  /api/v1/raster-variables/{id}/:
+    get:
+      operationId: raster_variables_retrieve
+      description: API viewset for raster variables.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this raster variable.
+        required: true
+      tags:
+      - raster-variables
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RasterVariable'
+          description: ''
+  /api/v1/spatial-extents/:
+    get:
+      operationId: spatial_extents_list
+      description: API viewset for spatial extents.
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - spatial-extents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSpatialExtentList'
+          description: ''
+  /api/v1/spatial-extents/{id}/:
+    get:
+      operationId: spatial_extents_retrieve
+      description: API viewset for spatial extents.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this spatial extent.
+        required: true
+      tags:
+      - spatial-extents
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpatialExtent'
+          description: ''
+  /api/v1/stations/:
+    get:
+      operationId: stations_list
+      description: |-
+        ViewSet for managing stations.
+
+        list: Get all stations with filtering and search
+        retrieve: Get a single station by ID
+        create: Create a new station
+        update: Update a station
+        partial_update: Partially update a station
+        destroy: Delete a station
+      parameters:
+      - in: query
+        name: agency
+        schema:
+          type: string
+          enum:
+          - EC
+          - NOAA_RFC
+          - USGS
+        description: |-
+          * `USGS` - USGS
+          * `EC` - Environment Canada
+          * `NOAA_RFC` - NOAA River Forecast Center
+      - in: query
+        name: huc_code
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: state
+        schema:
+          type: string
+      tags:
+      - stations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStationListList'
+          description: ''
+    post:
+      operationId: stations_create
+      description: |-
+        ViewSet for managing stations.
+
+        list: Get all stations with filtering and search
+        retrieve: Get a single station by ID
+        create: Create a new station
+        update: Update a station
+        partial_update: Partially update a station
+        destroy: Delete a station
+      tags:
+      - stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationCreateRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationCreate'
+          description: ''
+  /api/v1/stations/{station_number}/:
+    get:
+      operationId: stations_retrieve
+      description: |-
+        ViewSet for managing stations.
+
+        list: Get all stations with filtering and search
+        retrieve: Get a single station by ID
+        create: Create a new station
+        update: Update a station
+        partial_update: Partially update a station
+        destroy: Delete a station
+      parameters:
+      - in: path
+        name: station_number
+        schema:
+          type: string
+        required: true
+      tags:
+      - stations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Station'
+          description: ''
+    put:
+      operationId: stations_update
+      description: |-
+        ViewSet for managing stations.
+
+        list: Get all stations with filtering and search
+        retrieve: Get a single station by ID
+        create: Create a new station
+        update: Update a station
+        partial_update: Partially update a station
+        destroy: Delete a station
+      parameters:
+      - in: path
+        name: station_number
+        schema:
+          type: string
+        required: true
+      tags:
+      - stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StationRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Station'
+          description: ''
+    patch:
+      operationId: stations_partial_update
+      description: |-
+        ViewSet for managing stations.
+
+        list: Get all stations with filtering and search
+        retrieve: Get a single station by ID
+        create: Create a new station
+        update: Update a station
+        partial_update: Partially update a station
+        destroy: Delete a station
+      parameters:
+      - in: path
+        name: station_number
+        schema:
+          type: string
+        required: true
+      tags:
+      - stations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStationRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Station'
+          description: ''
+    delete:
+      operationId: stations_destroy
+      description: |-
+        ViewSet for managing stations.
+
+        list: Get all stations with filtering and search
+        retrieve: Get a single station by ID
+        create: Create a new station
+        update: Update a station
+        partial_update: Partially update a station
+        destroy: Delete a station
+      parameters:
+      - in: path
+        name: station_number
+        schema:
+          type: string
+        required: true
+      tags:
+      - stations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/stations/{station_number}/statistics/:
+    get:
+      operationId: stations_statistics_retrieve
+      description: |-
+        Get statistics for a station.
+
+        Returns observation counts, data availability, and date ranges.
+      parameters:
+      - in: path
+        name: station_number
+        schema:
+          type: string
+        required: true
+      tags:
+      - stations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Station'
+          description: ''
+  /api/v1/stations/by_region/:
+    get:
+      operationId: stations_by_region_retrieve
+      description: |-
+        Get stations grouped by region (state or HUC).
+
+        Query params:
+        - group_by: 'state' or 'huc'
+      tags:
+      - stations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Station'
+          description: ''
+components:
+  schemas:
+    AgencyEnum:
+      enum:
+      - USGS
+      - EC
+      - NOAA_RFC
+      type: string
+      description: |-
+        * `USGS` - USGS
+        * `EC` - Environment Canada
+        * `NOAA_RFC` - NOAA River Forecast Center
+    BlankEnum:
+      enum:
+      - ''
+    ComputationLog:
+      type: object
+      description: Full detail serializer for computation run logs.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        computation:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status363Enum'
+          readOnly: true
+        celery_task_id:
+          type: string
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        duration_seconds:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        records_computed:
+          type: integer
+          readOnly: true
+          nullable: true
+        error_message:
+          type: string
+          readOnly: true
+      required:
+      - celery_task_id
+      - completed_at
+      - computation
+      - duration_seconds
+      - error_message
+      - id
+      - records_computed
+      - started_at
+      - status
+    DailyFlowPercentile:
+      type: object
+      description: Single station result within a percentile-bands response.
+      properties:
+        station_number:
+          type: string
+        discharge:
+          type: number
+          format: double
+        percentile_rank:
+          type: number
+          format: double
+        band:
+          type: string
+        historical_record_count:
+          type: integer
+      required:
+      - band
+      - discharge
+      - historical_record_count
+      - percentile_rank
+      - station_number
+    DataPullLog:
+      type: object
+      description: Serializer for data pull logs.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        configuration:
+          type: integer
+        configuration_name:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/Status363Enum'
+        records_processed:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+        duration_seconds:
+          type: string
+          readOnly: true
+        error_message:
+          type: string
+      required:
+      - configuration
+      - configuration_name
+      - duration_seconds
+      - id
+      - start_time
+      - status
+    DataPullLogList:
+      type: object
+      description: Lightweight serializer for log lists.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        configuration:
+          type: integer
+        configuration_name:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/Status363Enum'
+        records_processed:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - configuration
+      - configuration_name
+      - id
+      - start_time
+      - status
+    DataSourceEcfEnum:
+      enum:
+      - USGS
+      - EC
+      - NOAA
+      - NOAA_RFC
+      type: string
+      description: |-
+        * `USGS` - USGS NWIS
+        * `EC` - Environment Canada
+        * `NOAA` - NOAA National Water Model
+        * `NOAA_RFC` - NOAA River Forecast Center
+    DataStrategyEnum:
+      enum:
+      - append
+      - overwrite
+      type: string
+      description: |-
+        * `append` - Append
+        * `overwrite` - Overwrite
+    DataTypeEnum:
+      enum:
+      - realtime_15min
+      - daily_mean
+      - forecast
+      - ec_realtime_daily
+      type: string
+      description: |-
+        * `realtime_15min` - Real-time 15 min
+        * `daily_mean` - Daily Mean
+        * `forecast` - Forecast
+        * `ec_realtime_daily` - EC Wateroffice Daily Mean
+    DischargeObservation:
+      type: object
+      description: Serializer for discharge observations.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        station:
+          type: integer
+        station_number:
+          type: string
+          readOnly: true
+        observed_at:
+          type: string
+          format: date-time
+        discharge:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        unit:
+          $ref: '#/components/schemas/UnitEnum'
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        quality_code:
+          oneOf:
+          - $ref: '#/components/schemas/QualityCodeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+      required:
+      - discharge
+      - id
+      - observed_at
+      - station
+      - station_number
+      - type
+      - unit
+    ForecastRun:
+      type: object
+      description: Serializer for forecast runs.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        station:
+          type: integer
+        station_number:
+          type: string
+          readOnly: true
+        station_name:
+          type: string
+          readOnly: true
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        run_date:
+          type: string
+          format: date-time
+          description: When forecast was issued
+        data:
+          description: 'Array of { date: string, value: number }'
+        rmse:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+          description: Accuracy metric
+        forecast_point_count:
+          type: string
+          readOnly: true
+      required:
+      - data
+      - forecast_point_count
+      - id
+      - run_date
+      - source
+      - station
+      - station_name
+      - station_number
+    ForecastRunList:
+      type: object
+      description: Lightweight serializer for forecast run lists (excludes full data).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        station_number:
+          type: string
+          readOnly: true
+        station_name:
+          type: string
+          readOnly: true
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        run_date:
+          type: string
+          format: date-time
+          description: When forecast was issued
+        rmse:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+          description: Accuracy metric
+        forecast_point_count:
+          type: string
+          readOnly: true
+      required:
+      - forecast_point_count
+      - id
+      - run_date
+      - source
+      - station_name
+      - station_number
+    ForecastStatistics:
+      type: object
+      description: Serializer for forecast statistics.
+      properties:
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        count:
+          type: integer
+        stations:
+          type: integer
+        total_forecast_points:
+          type: integer
+        avg_rmse:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - avg_rmse
+      - count
+      - end_date
+      - start_date
+      - stations
+      - total_forecast_points
+    LastRunStatusEnum:
+      enum:
+      - success
+      - failed
+      - running
+      - never
+      type: string
+      description: |-
+        * `success` - Success
+        * `failed` - Failed
+        * `running` - Running
+        * `never` - Never Run
+    PaginatedComputationLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComputationLog'
+    PaginatedDataPullLogListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataPullLogList'
+    PaginatedDischargeObservationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DischargeObservation'
+    PaginatedForecastRunList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForecastRun'
+    PaginatedForecastRunListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForecastRunList'
+    PaginatedPullConfigurationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PullConfiguration'
+    PaginatedRasterDatasetList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RasterDataset'
+    PaginatedRasterLayerListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RasterLayerList'
+    PaginatedRasterPullConfigurationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RasterPullConfiguration'
+    PaginatedRasterPullLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RasterPullLog'
+    PaginatedRasterVariableList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RasterVariable'
+    PaginatedScheduledComputationListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduledComputationList'
+    PaginatedSpatialExtentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpatialExtent'
+    PaginatedStationListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StationList'
+    PatchedPullConfigurationRequest:
+      type: object
+      description: Serializer for PullConfiguration model.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+        data_source:
+          $ref: '#/components/schemas/DataSourceEcfEnum'
+        data_type:
+          $ref: '#/components/schemas/DataTypeEnum'
+        data_strategy:
+          $ref: '#/components/schemas/DataStrategyEnum'
+        pull_start_date:
+          type: string
+          format: date-time
+        is_enabled:
+          type: boolean
+        schedule_type:
+          $ref: '#/components/schemas/ScheduleTypeEnum'
+        schedule_value:
+          type: string
+          description: e.g., '0 */6 * * *' for cron
+          maxLength: 50
+    PatchedStationRequest:
+      type: object
+      description: Serializer for Station model.
+      properties:
+        station_number:
+          type: string
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,8})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,8})?$
+          nullable: true
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 50
+        huc_code:
+          type: string
+          maxLength: 20
+        basin:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 50
+        catchment_area:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+          description: sq km
+        years_of_record:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        record_start_date:
+          type: string
+          format: date-time
+          nullable: true
+        record_end_date:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+    PercentileBandsResponse:
+      type: object
+      description: Top-level envelope for GET /observations/discharge/percentile-bands/.
+      properties:
+        date:
+          type: string
+          format: date
+        computed_at:
+          type: string
+          format: date-time
+          nullable: true
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyFlowPercentile'
+      required:
+      - computed_at
+      - count
+      - date
+      - results
+    PercentileDateRange:
+      type: object
+      description: Date range available in daily_flow_percentiles, for rangeslider
+        bounds.
+      properties:
+        min_date:
+          type: string
+          format: date
+          nullable: true
+        max_date:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - max_date
+      - min_date
+    PullConfiguration:
+      type: object
+      description: Serializer for PullConfiguration model.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        data_source:
+          $ref: '#/components/schemas/DataSourceEcfEnum'
+        data_type:
+          $ref: '#/components/schemas/DataTypeEnum'
+        data_strategy:
+          $ref: '#/components/schemas/DataStrategyEnum'
+        pull_start_date:
+          type: string
+          format: date-time
+        is_enabled:
+          type: boolean
+        schedule_type:
+          $ref: '#/components/schemas/ScheduleTypeEnum'
+        schedule_value:
+          type: string
+          description: e.g., '0 */6 * * *' for cron
+          maxLength: 50
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        station_count:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - data_strategy
+      - data_type
+      - id
+      - name
+      - pull_start_date
+      - schedule_type
+      - station_count
+      - updated_at
+    PullConfigurationCreate:
+      type: object
+      description: Serializer for creating configurations.
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        data_type:
+          $ref: '#/components/schemas/DataTypeEnum'
+        data_strategy:
+          $ref: '#/components/schemas/DataStrategyEnum'
+        pull_start_date:
+          type: string
+          format: date-time
+        is_enabled:
+          type: boolean
+        schedule_type:
+          $ref: '#/components/schemas/ScheduleTypeEnum'
+        schedule_value:
+          type: string
+          description: e.g., '0 */6 * * *' for cron
+          maxLength: 50
+      required:
+      - data_strategy
+      - data_type
+      - name
+      - pull_start_date
+      - schedule_type
+    PullConfigurationCreateRequest:
+      type: object
+      description: Serializer for creating configurations.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+        data_type:
+          $ref: '#/components/schemas/DataTypeEnum'
+        data_strategy:
+          $ref: '#/components/schemas/DataStrategyEnum'
+        pull_start_date:
+          type: string
+          format: date-time
+        is_enabled:
+          type: boolean
+        schedule_type:
+          $ref: '#/components/schemas/ScheduleTypeEnum'
+        schedule_value:
+          type: string
+          description: e.g., '0 */6 * * *' for cron
+          maxLength: 50
+        station_numbers:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+          writeOnly: true
+          description: List of station numbers to include in this configuration
+      required:
+      - data_strategy
+      - data_type
+      - name
+      - pull_start_date
+      - schedule_type
+    PullConfigurationDetail:
+      type: object
+      description: Detailed serializer with station list.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        data_source:
+          $ref: '#/components/schemas/DataSourceEcfEnum'
+        data_type:
+          $ref: '#/components/schemas/DataTypeEnum'
+        data_strategy:
+          $ref: '#/components/schemas/DataStrategyEnum'
+        pull_start_date:
+          type: string
+          format: date-time
+        is_enabled:
+          type: boolean
+        schedule_type:
+          $ref: '#/components/schemas/ScheduleTypeEnum'
+        schedule_value:
+          type: string
+          description: e.g., '0 */6 * * *' for cron
+          maxLength: 50
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        station_count:
+          type: string
+          readOnly: true
+        stations:
+          type: string
+          readOnly: true
+        last_execution:
+          type: string
+          readOnly: true
+        success_rate:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - data_strategy
+      - data_type
+      - id
+      - last_execution
+      - name
+      - pull_start_date
+      - schedule_type
+      - station_count
+      - stations
+      - success_rate
+      - updated_at
+    PullConfigurationRequest:
+      type: object
+      description: Serializer for PullConfiguration model.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+        data_source:
+          $ref: '#/components/schemas/DataSourceEcfEnum'
+        data_type:
+          $ref: '#/components/schemas/DataTypeEnum'
+        data_strategy:
+          $ref: '#/components/schemas/DataStrategyEnum'
+        pull_start_date:
+          type: string
+          format: date-time
+        is_enabled:
+          type: boolean
+        schedule_type:
+          $ref: '#/components/schemas/ScheduleTypeEnum'
+        schedule_value:
+          type: string
+          description: e.g., '0 */6 * * *' for cron
+          maxLength: 50
+      required:
+      - data_strategy
+      - data_type
+      - name
+      - pull_start_date
+      - schedule_type
+    QualityCodeEnum:
+      enum:
+      - P
+      - A
+      type: string
+      description: |-
+        * `P` - Provisional
+        * `A` - Approved
+    RasterDataset:
+      type: object
+      description: Serializer for RasterDataset model.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Human-readable dataset name (e.g., 'RTMA', 'SMAP SPL4')
+          maxLength: 100
+        collection_id:
+          type: string
+          description: 'Collection/dataset ID (GEE: ''NOAA/NWS/RTMA'', EarthData:
+            ''SPL4SMGP_008'', NOMADS: ''rtma2p5'')'
+          maxLength: 255
+        description:
+          type: string
+        resolution_m:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Native resolution in meters
+        temporal_resolution:
+          type: string
+          description: e.g., 'hourly', 'daily', '3-hourly'
+          maxLength: 50
+        update_frequency:
+          type: string
+          description: How often new data is available
+          maxLength: 50
+        is_active:
+          type: boolean
+        variable_count:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        data_source:
+          allOf:
+          - $ref: '#/components/schemas/RasterDatasetDataSourceEnum'
+          description: |-
+            Data source provider
+
+            * `earthdata` - NASA EarthData
+            * `nomads` - NOAA NOMADS
+            * `gee` - Google Earth Engine (deprecated)
+        daac:
+          type: string
+          nullable: true
+          description: NASA DAAC archive (e.g., NSIDC_CPRD, GES_DISC, LPDAAC_ECS)
+            - EarthData only
+          maxLength: 50
+        file_format:
+          type: string
+          nullable: true
+          description: Native file format (HDF5, NetCDF4, GRIB2, GeoTIFF)
+          maxLength: 20
+      required:
+      - collection_id
+      - created_at
+      - id
+      - name
+      - resolution_m
+      - temporal_resolution
+      - update_frequency
+      - updated_at
+      - variable_count
+    RasterDatasetDataSourceEnum:
+      enum:
+      - earthdata
+      - nomads
+      - gee
+      type: string
+      description: |-
+        * `earthdata` - NASA EarthData
+        * `nomads` - NOAA NOMADS
+        * `gee` - Google Earth Engine (deprecated)
+    RasterLayer:
+      type: object
+      description: Serializer for RasterLayer model.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        variable:
+          type: integer
+        variable_name:
+          type: string
+          readOnly: true
+        dataset_name:
+          type: string
+          readOnly: true
+        extent:
+          type: integer
+        extent_name:
+          type: string
+          readOnly: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Data timestamp (UTC)
+        date:
+          type: string
+          format: date
+          description: Date component for easier querying
+        file_path:
+          type: string
+          description: Relative path to raster file
+          maxLength: 500
+        file_size_bytes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+        format:
+          type: string
+          maxLength: 20
+        compression:
+          type: string
+          maxLength: 20
+        resolution_m:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Actual resolution in meters
+        width_pixels:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        height_pixels:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        crs:
+          type: string
+          maxLength: 50
+        min_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        max_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        mean_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        std_dev:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        no_data_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        is_valid:
+          type: boolean
+          description: Passed validation checks
+        validation_errors:
+          nullable: true
+          description: Validation error messages
+        download_url:
+          type: string
+          readOnly: true
+        thumbnail_url:
+          type: string
+          readOnly: true
+        processing_time_seconds:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - dataset_name
+      - date
+      - download_url
+      - extent
+      - extent_name
+      - file_path
+      - height_pixels
+      - id
+      - resolution_m
+      - thumbnail_url
+      - timestamp
+      - variable
+      - variable_name
+      - width_pixels
+    RasterLayerList:
+      type: object
+      description: Lightweight serializer for listing raster layers.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        variable_name:
+          type: string
+          readOnly: true
+        extent_name:
+          type: string
+          readOnly: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Data timestamp (UTC)
+        date:
+          type: string
+          format: date
+          description: Date component for easier querying
+        file_size_bytes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+        resolution_m:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Actual resolution in meters
+        is_valid:
+          type: boolean
+          description: Passed validation checks
+      required:
+      - date
+      - extent_name
+      - id
+      - resolution_m
+      - timestamp
+      - variable_name
+    RasterLayerRequest:
+      type: object
+      description: Serializer for RasterLayer model.
+      properties:
+        variable:
+          type: integer
+        extent:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+          description: Data timestamp (UTC)
+        date:
+          type: string
+          format: date
+          description: Date component for easier querying
+        file_path:
+          type: string
+          minLength: 1
+          description: Relative path to raster file
+          maxLength: 500
+        file_size_bytes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
+        format:
+          type: string
+          minLength: 1
+          maxLength: 20
+        compression:
+          type: string
+          minLength: 1
+          maxLength: 20
+        resolution_m:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Actual resolution in meters
+        width_pixels:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        height_pixels:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        crs:
+          type: string
+          minLength: 1
+          maxLength: 50
+        min_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        max_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        mean_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        std_dev:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        no_data_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        is_valid:
+          type: boolean
+          description: Passed validation checks
+        validation_errors:
+          nullable: true
+          description: Validation error messages
+        processing_time_seconds:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - date
+      - extent
+      - file_path
+      - height_pixels
+      - resolution_m
+      - timestamp
+      - variable
+      - width_pixels
+    RasterPullConfiguration:
+      type: object
+      description: Serializer for RasterPullConfiguration model.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        dataset:
+          type: integer
+        dataset_name:
+          type: string
+          readOnly: true
+        variable_names:
+          type: string
+          readOnly: true
+        extent_names:
+          type: string
+          readOnly: true
+        description:
+          type: string
+        schedule_enabled:
+          type: boolean
+        schedule_cron:
+          type: string
+          description: Celery cron expression
+          maxLength: 100
+        pull_frequency_hours:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Hours between pulls
+        lookback_days:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Days of historical data to check
+        max_age_hours:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Maximum age of data to consider 'current'
+        resampling_method:
+          type: string
+          description: e.g., 'nearest', 'bilinear', 'cubic'
+          maxLength: 50
+        target_resolution_m:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+          description: Target resolution for resampling (null = native)
+        apply_compression:
+          type: boolean
+        generate_thumbnails:
+          type: boolean
+        validate_on_pull:
+          type: boolean
+        calculate_statistics:
+          type: boolean
+        is_active:
+          type: boolean
+        last_successful_pull:
+          type: string
+          format: date-time
+          nullable: true
+        last_pull_attempt:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - dataset
+      - dataset_name
+      - extent_names
+      - id
+      - name
+      - updated_at
+      - variable_names
+    RasterPullLog:
+      type: object
+      description: Serializer for RasterPullLog model.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        configuration:
+          type: integer
+          nullable: true
+        configuration_name:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/RasterPullLogStatusEnum'
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration_seconds:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        duration_formatted:
+          type: string
+          readOnly: true
+        layers_attempted:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        layers_successful:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        layers_failed:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        layers_skipped:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Already existed
+        error_message:
+          type: string
+        warnings:
+          nullable: true
+          description: List of warning messages
+        celery_task_id:
+          type: string
+          maxLength: 255
+      required:
+      - configuration_name
+      - duration_formatted
+      - id
+      - started_at
+    RasterPullLogStatusEnum:
+      enum:
+      - pending
+      - running
+      - success
+      - partial
+      - failed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `running` - Running
+        * `success` - Success
+        * `partial` - Partial Success
+        * `failed` - Failed
+    RasterVariable:
+      type: object
+      description: Serializer for RasterVariable model.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        dataset:
+          type: integer
+        dataset_name:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          description: Variable name (e.g., 'temperature', 'precipitation')
+          maxLength: 100
+        gee_band_name:
+          type: string
+          description: Band name in GEE (e.g., 'TMP', 'APCP')
+          maxLength: 100
+        unit:
+          type: string
+          description: Measurement unit (e.g., 'Kelvin', 'mm', 'm/s')
+          maxLength: 50
+        description:
+          type: string
+        min_valid_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        max_valid_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        layer_count:
+          type: string
+          readOnly: true
+      required:
+      - dataset
+      - dataset_name
+      - gee_band_name
+      - id
+      - layer_count
+      - name
+      - unit
+    ScheduleEnum:
+      enum:
+      - hourly
+      - every_6h
+      - daily
+      - weekly
+      type: string
+      description: |-
+        * `hourly` - Hourly
+        * `every_6h` - Every 6 Hours
+        * `daily` - Daily
+        * `weekly` - Weekly
+    ScheduleTypeEnum:
+      enum:
+      - hourly
+      - daily
+      - weekly
+      - custom
+      type: string
+      description: |-
+        * `hourly` - Hourly
+        * `daily` - Daily
+        * `weekly` - Weekly
+        * `custom` - Custom Cron
+    ScheduledComputation:
+      type: object
+      description: Full detail serializer including recent logs.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        task_path:
+          type: string
+          readOnly: true
+          description: Dotted Celery task path, e.g. src.analytics.tasks.compute_flow_percentile_bands
+        schedule:
+          $ref: '#/components/schemas/ScheduleEnum'
+        is_enabled:
+          type: boolean
+        last_run_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        last_run_status:
+          allOf:
+          - $ref: '#/components/schemas/LastRunStatusEnum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        recent_logs:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - last_run_at
+      - last_run_status
+      - name
+      - recent_logs
+      - schedule
+      - task_path
+      - updated_at
+    ScheduledComputationList:
+      type: object
+      description: Lightweight serializer for list view.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        schedule:
+          allOf:
+          - $ref: '#/components/schemas/ScheduleEnum'
+          readOnly: true
+        is_enabled:
+          type: boolean
+          readOnly: true
+        last_run_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        last_run_status:
+          allOf:
+          - $ref: '#/components/schemas/LastRunStatusEnum'
+          readOnly: true
+      required:
+      - id
+      - is_enabled
+      - last_run_at
+      - last_run_status
+      - name
+      - schedule
+    ScheduledComputationRequest:
+      type: object
+      description: Full detail serializer including recent logs.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/ScheduleEnum'
+        is_enabled:
+          type: boolean
+      required:
+      - name
+      - schedule
+    SourceEnum:
+      enum:
+      - NOAA_RFC
+      type: string
+      description: '* `NOAA_RFC` - NOAA River Forecast Center'
+    SpatialExtent:
+      type: object
+      description: Serializer for SpatialExtent model.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: e.g., 'HUC_17', 'Western_US'
+          maxLength: 100
+        description:
+          type: string
+        min_lon:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,6})?$
+        min_lat:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,6})?$
+        max_lon:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,6})?$
+        max_lat:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,6})?$
+        bbox:
+          type: string
+          readOnly: true
+        layer_count:
+          type: string
+          readOnly: true
+      required:
+      - bbox
+      - id
+      - layer_count
+      - max_lat
+      - max_lon
+      - min_lat
+      - min_lon
+      - name
+    Station:
+      type: object
+      description: Serializer for Station model.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        station_number:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,8})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,8})?$
+          nullable: true
+        timezone:
+          type: string
+          maxLength: 50
+        huc_code:
+          type: string
+          maxLength: 20
+        basin:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 50
+        catchment_area:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+          description: sq km
+        years_of_record:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        record_start_date:
+          type: string
+          format: date-time
+          nullable: true
+        record_end_date:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+        last_updated:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - agency
+      - id
+      - last_updated
+      - name
+      - station_number
+    StationCreate:
+      type: object
+      description: Serializer for creating stations.
+      properties:
+        station_number:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,8})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,8})?$
+          nullable: true
+        timezone:
+          type: string
+          maxLength: 50
+        huc_code:
+          type: string
+          maxLength: 20
+        basin:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 50
+        catchment_area:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+          description: sq km
+        years_of_record:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        record_start_date:
+          type: string
+          format: date-time
+          nullable: true
+        record_end_date:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - agency
+      - name
+      - station_number
+    StationCreateRequest:
+      type: object
+      description: Serializer for creating stations.
+      properties:
+        station_number:
+          type: string
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,8})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,8})?$
+          nullable: true
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 50
+        huc_code:
+          type: string
+          maxLength: 20
+        basin:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 50
+        catchment_area:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+          description: sq km
+        years_of_record:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        record_start_date:
+          type: string
+          format: date-time
+          nullable: true
+        record_end_date:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - agency
+      - name
+      - station_number
+    StationList:
+      type: object
+      description: Lightweight serializer for station lists.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        station_number:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,8})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,8})?$
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - agency
+      - id
+      - name
+      - station_number
+    StationRequest:
+      type: object
+      description: Serializer for Station model.
+      properties:
+        station_number:
+          type: string
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+        agency:
+          $ref: '#/components/schemas/AgencyEnum'
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,8})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,8})?$
+          nullable: true
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 50
+        huc_code:
+          type: string
+          maxLength: 20
+        basin:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 50
+        catchment_area:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+          description: sq km
+        years_of_record:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        record_start_date:
+          type: string
+          format: date-time
+          nullable: true
+        record_end_date:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - agency
+      - name
+      - station_number
+    Status363Enum:
+      enum:
+      - running
+      - success
+      - failed
+      type: string
+      description: |-
+        * `running` - Running
+        * `success` - Success
+        * `failed` - Failed
+    TypeEnum:
+      enum:
+      - realtime_15min
+      - daily_mean
+      type: string
+      description: |-
+        * `realtime_15min` - Real-time 15 min
+        * `daily_mean` - Daily Mean
+    UnitEnum:
+      enum:
+      - cfs
+      - cms
+      type: string
+      description: |-
+        * `cfs` - Cubic Feet per Second
+        * `cms` - Cubic Meters per Second
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"
