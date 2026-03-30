@@ -128,7 +128,7 @@ class StreamflowOpsClient:
     def _paginate(self, url: str, params: dict | None = None) -> Iterator[dict]:
         """Yield every result record from a paginated DRF endpoint."""
         params = dict(params or {})
-        params.setdefault("page_size", cfg.page_size)
+        params.setdefault("limit", cfg.page_size)
         while url:
             resp = self.session.get(url, params=params)
             self._raise_for_status(resp)
