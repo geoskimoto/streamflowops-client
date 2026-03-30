@@ -13,6 +13,30 @@ A Python HTTP client for the [StreamflowOps DataOps API](https://streamflowops.3
 
 ---
 
+## Installation
+
+### Editable local install (recommended for development)
+
+Changes to the repo are reflected immediately — no reinstall needed.
+
+```bash
+pip install -e /path/to/streamflowops-client
+```
+
+### Install directly from GitHub
+
+```bash
+pip install git+ssh://git@github.com/geoskimoto/streamflowops-client.git
+```
+
+### Install with dev dependencies (includes pytest)
+
+```bash
+pip install -e "/path/to/streamflowops-client[dev]"
+```
+
+---
+
 ## Configuration
 
 The client reads connection settings from a `config` module that exposes a `cfg` object with the following attributes:
@@ -23,6 +47,20 @@ The client reads connection settings from a `config` module that exposes a `cfg`
 | `cfg.api_token` | Token Auth credential |
 | `cfg.page_size` | Records per page for paginated requests (default `100`) |
 | `cfg.max_download_workers` | Threads used by `download_forecasts()` (default `4`) |
+
+The `config` module is not bundled with the package — it is the user-supplied credential and settings layer that lives in your project directory.  Create a `config.py` alongside your script:
+
+```python
+# config.py  (in your project directory, not committed to version control)
+from types import SimpleNamespace
+
+cfg = SimpleNamespace(
+    api_base_url="https://streamflowops.3rdplaces.io/api/v1",
+    api_token="your-token-here",
+    page_size=100,           # records per page; server max is 1000
+    max_download_workers=4,  # parallel threads for download_forecasts()
+)
+```
 
 You can also pass `base_url` and `api_token` directly to the constructor to override config values:
 
