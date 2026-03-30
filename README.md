@@ -146,6 +146,47 @@ by_huc   = client.get_stations_by_region(group_by="huc")
 
 ---
 
+### Master Stations (cross-network ID reference)
+
+The master station table maps stations across networks — USGS gauge IDs, NOAA Location IDs (LIDs), and RFC codes all on a single record.  Useful for translating IDs on the fly in analysis workflows.
+
+#### Resolve any station ID to all network IDs
+
+```python
+# Look up by NOAA LID
+ids = client.lookup_station_ids("PATW1")
+print(ids["station_number"])  # '12149000'
+print(ids["rfc_code"])        # 'NWRFC'
+
+# Look up by USGS gauge number — same result
+ids = client.lookup_station_ids("12149000")
+print(ids["noaa_lid"])        # 'PATW1'
+```
+
+Response fields: `station_number`, `noaa_lid`, `rfc_code`, `station_name`,
+`agency`, `state_code`, `huc_code`, `latitude`, `longitude`, `altitude_ft`,
+`drainage_area_sqmi`.
+
+Raises `requests.HTTPError` (404) if no station matches the supplied ID.
+
+#### Browse the full reference table
+
+```python
+# All master stations (paginated)
+all_stations = client.list_master_stations()
+
+# Filter by RFC and state
+nwrfc_wa = client.list_master_stations(rfc_code="NWRFC", state_code="WA")
+
+# Full-text search across station_number, noaa_lid, station_name
+results = client.list_master_stations(search="Methow")
+
+# Retrieve a single record by primary key
+record = client.get_master_station(42)
+```
+
+---
+
 ### Forecasts
 
 #### List forecasts

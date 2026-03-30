@@ -726,6 +726,112 @@ class TestStations:
 
 
 # ---------------------------------------------------------------------------#
+# Master Stations                                                             #
+# ---------------------------------------------------------------------------#
+
+
+MASTER_STATION_RECORD = {
+    "station_number": "12149000",
+    "noaa_lid": "PATW1",
+    "rfc_code": "NWRFC",
+    "station_name": "Methow River at Pateros WA",
+    "agency": "USGS",
+    "state_code": "WA",
+    "huc_code": "17020009",
+    "latitude": "48.05340000",
+    "longitude": "-119.90180000",
+    "altitude_ft": None,
+    "drainage_area_sqmi": "2800.0000",
+}
+
+
+class TestMasterStations:
+    def test_list_master_stations_no_filters(self, client) -> None:
+        records = [MASTER_STATION_RECORD]
+        client.session.get.return_value = make_response(make_paginated(records))
+
+        result = client.list_master_stations()
+
+        assert result == records
+        assert_get_called(client.session, "/master-stations/")
+
+    def test_list_master_stations_with_filters(self, client) -> None:
+        client.session.get.return_value = make_response(make_paginated([]))
+
+        client.list_master_stations(rfc_code="NWRFC", state_code="WA")
+
+        assert_get_called_with_params(
+            client.session,
+            "/master-stations/",
+            {"rfc_code": "NWRFC", "state_code": "WA"},
+        )
+
+    def test_list_master_stations_search(self, client) -> None:
+        client.session.get.return_value = make_response(make_paginated([]))
+
+        client.list_master_stations(search="Methow")
+
+        assert_get_called_with_params(
+            client.session, "/master-stations/", {"search": "Methow"}
+        )
+
+    def test_list_master_stations_none_filters_omitted(self, client) -> None:
+        client.session.get.return_value = make_response(make_paginated([]))
+
+        client.list_master_stations(rfc_code=None, state_code=None)
+
+        actual_params = client.session.get.call_args[1].get("params", {})
+        assert "rfc_code" not in actual_params
+        assert "state_code" not in actual_params
+
+    def test_get_master_station(self, client) -> None:
+        client.session.get.return_value = make_response(MASTER_STATION_RECORD)
+
+        result = client.get_master_station(1)
+
+        assert result == MASTER_STATION_RECORD
+        assert_get_called(client.session, "/master-stations/1/")
+
+    def test_lookup_station_ids_by_noaa_lid(self, client) -> None:
+        client.session.get.return_value = make_response(MASTER_STATION_RECORD)
+
+        result = client.lookup_station_ids("PATW1")
+
+        assert result["station_number"] == "12149000"
+        assert result["noaa_lid"] == "PATW1"
+        assert result["rfc_code"] == "NWRFC"
+        assert_get_called_with_params(
+            client.session, "/master-stations/lookup/", {"id": "PATW1"}
+        )
+
+    def test_lookup_station_ids_by_usgs_number(self, client) -> None:
+        client.session.get.return_value = make_response(MASTER_STATION_RECORD)
+
+        result = client.lookup_station_ids("12149000")
+
+        assert result["noaa_lid"] == "PATW1"
+        assert_get_called_with_params(
+            client.session, "/master-stations/lookup/", {"id": "12149000"}
+        )
+
+    def test_lookup_station_ids_returns_all_id_fields(self, client) -> None:
+        client.session.get.return_value = make_response(MASTER_STATION_RECORD)
+
+        result = client.lookup_station_ids("PATW1")
+
+        for field in ("station_number", "noaa_lid", "rfc_code"):
+            assert field in result
+
+    def test_lookup_station_ids_raises_on_404(self, client) -> None:
+        client.session.get.return_value = make_response(
+            {"detail": "Not found."}, status_code=404
+        )
+
+        with pytest.raises(requests.HTTPError):
+            client.lookup_station_ids("ZZZZZ")
+
+
+# ---------------------------------------------------------------------------#
 # Pagination                                                                  #
 # ---------------------------------------------------------------------------#
 

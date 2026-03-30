@@ -570,6 +570,83 @@ class StreamflowOpsClient:
         )
 
     # ----------------------------------------------------------------------- #
+    # Master Stations (cross-network ID reference table)                       #
+    # ----------------------------------------------------------------------- #
+
+    def list_master_stations(
+        self,
+        *,
+        agency: str | None = None,
+        state_code: str | None = None,
+        huc_code: str | None = None,
+        rfc_code: str | None = None,
+        search: str | None = None,
+        ordering: str | None = None,
+    ) -> list[dict]:
+        """List the master station reference table with optional filters.
+
+        Each record contains all known network IDs for a station
+        (``station_number``, ``noaa_lid``, ``rfc_code``) alongside metadata.
+
+        Parameters
+        ----------
+        agency:
+            ``'USGS'``, ``'EC'``, or ``'NOAA_RFC'``.
+        state_code:
+            Two-letter state code, e.g. ``'WA'`` or ``'OR'``.
+        huc_code:
+            8-digit HUC code.
+        rfc_code:
+            River Forecast Center code, e.g. ``'NWRFC'``.
+        search:
+            Full-text search across ``station_number``, ``noaa_lid``, and
+            ``station_name``.
+        """
+        params = _compact(
+            {
+                "agency": agency,
+                "state_code": state_code,
+                "huc_code": huc_code,
+                "rfc_code": rfc_code,
+                "search": search,
+                "ordering": ordering,
+            }
+        )
+        return self._paginate_path("/master-stations/", params)
+
+    def get_master_station(self, pk: int) -> dict:
+        """Retrieve a single master station record by primary key."""
+        return self._get(f"/master-stations/{pk}/")
+
+    def lookup_station_ids(self, station_id: str) -> dict:
+        """Resolve any station ID to all known network identifiers.
+
+        Accepts a ``station_number`` (USGS gauge ID) or ``noaa_lid``
+        (NOAA Location ID) and returns the matching master station record
+        with all cross-network ID fields.
+
+        Parameters
+        ----------
+        station_id:
+            Any known identifier for the station, e.g. ``'PATW1'`` or
+            ``'12149000'``.  The lookup is case-insensitive.
+
+        Returns
+        -------
+        dict
+            Keys: ``station_number``, ``noaa_lid``, ``rfc_code``,
+            ``station_name``, ``agency``, ``state_code``, ``huc_code``,
+            ``latitude``, ``longitude``, ``altitude_ft``,
+            ``drainage_area_sqmi``.
+
+        Raises
+        ------
+        requests.HTTPError
+            404 if no station matches *station_id*.
+        """
+        return self._get("/master-stations/lookup/", {"id": station_id})
+
+    # ----------------------------------------------------------------------- #
     # Higher-level helpers                                                     #
     # ----------------------------------------------------------------------- #
 
